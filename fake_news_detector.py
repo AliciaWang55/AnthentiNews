@@ -3,19 +3,15 @@ from sklearn.model_selection import train_test_split
 from sklearn.feature_extraction.text import TfidfVectorizer
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import classification_report
+import gradio as gr
 
-# Load dataset (make sure 'train.tsv' is in the same folder)
+# Load and preprocess data
 df = pd.read_csv("train.tsv", sep='\t', header=None, names=[
     "id", "label", "statement", "subject", "speaker", "job", "state",
     "party", "barely_true", "half_true", "mostly_true", "false", 
     "pants_on_fire", "context"
 ])
 
-
-# Show original labels
-print("Original labels:", df['label'].unique())
-
-# Keep only relevant columns
 df = df[["statement", "label"]]
 
 # Simplify labels to 'real' and 'fake'
@@ -27,17 +23,15 @@ def simplify_label(label):
 
 df['label'] = df['label'].apply(simplify_label)
 
-# Show simplified label distribution
-print("Simplified labels:", df['label'].value_counts())
-
-# Drop any rows with missing values
+# Drop missing values
 df.dropna(inplace=True)
 
-# Split data into train/test sets
+# Split dataset
 X_train, X_test, y_train, y_test = train_test_split(
-    df['statement'], df['label'], test_size=0.2, random_state=42)
+    df['statement'], df['label'], test_size=0.2, random_state=42
+)
 
-# Vectorize text using TF-IDF
+# TF-IDF Vectorization
 vectorizer = TfidfVectorizer(stop_words='english', max_df=0.7)
 X_train_vec = vectorizer.fit_transform(X_train)
 X_test_vec = vectorizer.transform(X_test)
@@ -46,25 +40,39 @@ X_test_vec = vectorizer.transform(X_test)
 model = LogisticRegression()
 model.fit(X_train_vec, y_train)
 
-# Predict and evaluate
-y_pred = model.predict(X_test_vec)
-print(classification_report(y_test, y_pred))
-
-# Custom prediction function
+# Function to predict from user input
 def predict_fake_news(text):
     vec = vectorizer.transform([text])
     prediction = model.predict(vec)[0]
-    print(f"\nPrediction: This is likely '{prediction.upper()}' news.")
+    return f"Prediction: This is likely **{prediction.upper()}** news."
 
-# Test with custom input
-predict_fake_news("Joe Biden says he created 5 million jobs in 2021.")
+iface = gr.Interface(
+    fn=predict_fake_news,
+    inputs=gr.Textbox(lines=3, placeholder="Enter a news statement..."),
+    outputs="text",
+    title="Fake News Detector",
+    description="Enter a news claim or statement to see if it's likely fake or real.",
+)
 
-import gradio as gr
+# Add custom CSS for a more polished UI
+iface.css = """
+.gradio-container {
+    background-color: #f7f7f7;
+    padding: 30px;
+    border-radius: 8px;
+}
+.gradio-header {
+    font-family: 'Arial', sans-serif;
+    font-size: 24px;
+    color: #333;
+    text-align: center;
+}
+.gradio-footer {
+    font-size: 14px;
+    text-align: center;
+    color: #777;
+}
+"""
 
-def gradio_predict(text):
-    vec = vectorizer.transform([text])
-    prediction = model.predict(vec)[0]
-    return f"This is likely '{prediction.upper()}' news."
 
-iface = gr.Interface(fn=gradio_predict, inputs="text", outputs="text", title="Fake News Detector")
 iface.launch()
