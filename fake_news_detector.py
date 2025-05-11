@@ -31,11 +31,11 @@ model = LogisticRegression()
 model.fit(X_train_vec, y_train)
 
 # --- Build Gradio Interface ---
-
-
 with gr.Blocks(css="""
 body {
     background-color: #f5f5dc;
+    margin: 0;
+    padding: 0;
 }
 
 #custom-button {
@@ -63,24 +63,53 @@ body {
     box-shadow: none !important;
 }
 
-#top-image {
-    display: block;
-    margin-left: auto;
-    margin-right: auto;
-    width: 200px;
+.center-row {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+}
+
+#top-logo {
+    width: 80px;
+    height: 80px;
+    object-fit: contain;
+    margin: 20px;
+}
+
+.app-title {
+    font-size: 48px;
+    font-family: 'Times New Roman', serif;
+    color: #b71c1c;
+    border-bottom: 4px solid #b71c1c;
+    display: inline-block;
+    padding-bottom: 10px;
+    margin: 0;
+
 }
 """) as demo:
 
-    gr.Image("logo.png", elem_id="top-image", show_label=False)
-    gr.Markdown("## 📰 AuthentiNews: Fake News Detector")
-    gr.Markdown("Enter a news statement below. The model will predict if it's likely REAL or FAKE.")
+    # Centered logo
+    with gr.Row(elem_classes=["center-row"]):
+        gr.Image("logo.png", elem_id="top-logo", show_label=False)
 
+    # Centered title
+    with gr.Row(elem_classes=["center-row"]):
+        #gr.Markdown("<h1 class='app-title'>AuthentiNews: Fake News Detector</h1>")
+        gr.Markdown("""
+<div style='text-align: center;'>
+  <h1 class='app-title'>AuthentiNews: Fake News Detector</h1>
+</div>
+""")
+
+
+    # Input/output layout
     with gr.Row():
         with gr.Column():
-            input_box = gr.Textbox(label="Input Statement", lines=10, elem_classes=["box"])
+            input_box = gr.Textbox(label="News Statement", lines=10, elem_classes=["box"])
             clear_btn = gr.Button("Clear")
         with gr.Column():
-            output_box = gr.Textbox(label="Prediction", lines=10, interactive=False, elem_classes=["box"])
+            output_box = gr.Textbox(label="Analysis", lines=10, interactive=False, elem_classes=["box"])
 
     with gr.Row():
         submit_btn = gr.Button("Check News", elem_id="custom-button")
